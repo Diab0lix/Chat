@@ -1,4 +1,4 @@
 import subprocess
 
-with open('out.txt', 'w') as file:
+with open('whoami.txt', 'w') as file:
     proc = subprocess.run(['whoami'], stdout=file)
