@@ -33,6 +33,7 @@ def join():
         reply = 'Vous avez été ajouté à la liste des clients disponibles\n'
 
     s.sendto(reply.encode(), addr)
+    s.sendto('Écrivez /clients pour voir la liste des clients disponibles\n'.encode(), addr)
 
 # now keep talking with the client
 while True:
@@ -45,14 +46,18 @@ while True:
     if not data:
         break
 
+    err_msg = 'Commande inconnue, écrivez /join pour vous ajouter à la liste des clients disponibles ou /clients pour consulter cette liste.\n'
+    
+    
     if data.decode() == '/join\n':
         join()
-    
-    if data.decode() == '/clients\n':
+    elif data.decode() == '/clients\n':
         s.sendto(str(clients).encode(), addr)
         s.sendto('\n'.encode(), addr)
+    else:
+        s.sendto(err_msg.encode(), addr)
 
     # log all messages
     print('Message[' + addr[0] + ':' + str(addr[1]) + '] - ' + data.decode().strip())
 
-s.close()
+#s.close()
