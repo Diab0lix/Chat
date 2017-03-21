@@ -59,5 +59,3 @@ while True:
 
     # log all messages
     print('Message[' + addr[0] + ':' + str(addr[1]) + '] - ' + data.decode().strip())
-
-#s.close()
