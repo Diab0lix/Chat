@@ -7,13 +7,13 @@ import socket
 import sys
 import struct
 
-SERVERADDRESS = (socket.gethostname(), 6000)
-
 class EchoServer:
-    def __init__(self):
+    def __init__(self, host=socket.gethostname(), port=6000):
         self.__s = socket.socket()
-        self.__s.bind(SERVERADDRESS)
-        self.clients = []
+        self.__s.bind((host, port))
+        self.__clients = []
+        self.__host = host
+        self.__port = port
 
     def run(self):
         handlers = {
@@ -21,22 +21,25 @@ class EchoServer:
             '/client': self._client
         }
         self.__s.listen()
+        print("Serveur à l'écoute sur {}:{}".format(self.__host, self.__port))
         while True:
             client, addr = self.__s.accept()
-            try:
-                message = self._receive(client).decode()
-                if message in handlers:
-                    handlers[message]()
-                client.close()
-            except OSError:
-                print('Erreur lors de la réception du message.')
+            #try:
+            message = self._receive(client).decode()
+            if message in handlers:
+                handlers[message]()
+            print(message)
+            #client.close()
+            #except OSError:
+                #print('Erreur lors de la réception du message.')
     
     def _join(self):
-        self.clients.append(SERVERADDRESS[0])
+        self.__clients.append(self.__host)
+        self.__s.sendto('Vous avez rejoint le serveur'.encode(), (self.__host, self.__port))
 
     def _client(self):
-        print(self.clients)
-        self.__s.send(struct.pack('I', str(self.clients)))
+        print(self.__clients)
+        self.__s.sendto(self.__clients.encode(), (self.__host, self.__port))
         self.__s.close()
 
     def _receive(self, client):
@@ -50,13 +53,15 @@ class EchoServer:
 
 
 class EchoClient:
-    def __init__(self, message):
+    def __init__(self, message, host=socket.gethostname(), port=8888):
         self.__message = message
         self.__s = socket.socket()
+        self.__host = host
+        self.__port = port
     
     def run(self):
         try:
-            self.__s.connect(SERVERADDRESS)
+            self.__s.connect((self.__host, self.__port))
             self._send()
             self.__s.close()
         except OSError:
