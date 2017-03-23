@@ -1,5 +1,3 @@
-# myChat
-
 ## Quick start
 
 To run the server, just launch:
