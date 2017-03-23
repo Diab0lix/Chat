@@ -5,8 +5,8 @@ To run the server, just launch:
     > ./echo.py
 
 You can then launch the chat script by default (localhost, port=5000):
-   
-   > ./chat.py
+
+    > ./chat.py
 
 You can now run different terminal to be able to chat with 2 or more example:
 
