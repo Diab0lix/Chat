@@ -21,19 +21,19 @@ except (socket.error, msg):
     sys.exit()
 
 print('Socket bind complete')
+print('listening on ' + HOST + ':' + str(PORT))
 
 
 clients = []
 
 def join():
     if addr in clients:
-        reply = 'Vous êtes déjà dans la liste des clients disponibles\n' 
+        reply = 'Vous êtes déjà dans la liste des clients disponibles\nÉcrivez /clients pour voir la liste des clients disponibles\n' 
     else:
         clients.append(addr)
-        reply = 'Vous avez été ajouté à la liste des clients disponibles\n'
+        reply = 'Vous avez été ajouté à la liste des clients disponibles\nÉcrivez /clients pour voir la liste des clients disponibles\n'
 
     s.sendto(reply.encode(), addr)
-    s.sendto('Écrivez /clients pour voir la liste des clients disponibles\n'.encode(), addr)
 
 # now keep talking with the client
 while True:
@@ -49,9 +49,9 @@ while True:
     err_msg = 'Commande inconnue, écrivez /join pour vous ajouter à la liste des clients disponibles ou /clients pour consulter cette liste.\n'
     
     
-    if data.decode() == '/join\n':
+    if data.decode() == '/join':
         join()
-    elif data.decode() == '/clients\n':
+    elif data.decode() == '/clients':
         s.sendto(str(clients).encode(), addr)
         s.sendto('\n'.encode(), addr)
     else:
