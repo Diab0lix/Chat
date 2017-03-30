@@ -66,6 +66,6 @@ if __name__ == '__main__':
         try:
             Server(int(sys.argv[1])).run()
         except:
-            print('Veuillez entrer un nombre de port')
+            print('Please enter a port number')
     else: 
         Server().run()
