@@ -12,7 +12,7 @@ You can then launch the chat script by default ('localhost', port=5000):
 
 Choose a username with "/pseudo". Example:
 
-    > ./pseudo Cmb.
+    > ./pseudo Cmb
 
 Use method /list to get the list of online users (to use on defalt chat script).
 
