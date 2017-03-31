@@ -2,7 +2,7 @@
 # chat.py
 # author: Sebastien Combefis
 # Modified by: Thierry Frycia & Mohamad Mroue
-# version: March 23, 2017
+# version: March 30, 2017
 
 import socket
 import sys
@@ -10,25 +10,24 @@ import threading
 import time
 
 SERVERADDRESS = (socket.gethostname(), 6000)
+s = socket.socket(type=socket.SOCK_DGRAM)
 username=''
 
 class Chat():
     def __init__(self, host=socket.gethostname(), port=5000):
         try:
-            global s
-            s = socket.socket(type=socket.SOCK_DGRAM)
             s.settimeout(0.5)
             s.bind((host, port))
-            if host == 'localhost' or host == '127.0.0.1':
-                print('Please choose another Port or IP address.')
-                quit()
-            if host!=socket.gethostname() and port==5000:
-                print('Please choose another Port or IP address.')
-                quit()
             self.__s = s
+            if host=='localhost' or host=='127.0.0.1':
+                print('Please choose another IP address.')
+                quit()
             print('Hearing on {}:{}'.format(host, port))
             print('Use "/help" for help.')
         except OSError:
+            print('Please choose another Port or IP address.')
+            quit()
+        except:
             print('Please choose another Port or IP address.')
             quit()
 
@@ -60,27 +59,40 @@ class Chat():
                 print('Unknown Command:', command)
 
     def _exit(self):
+        self._leaved("{} leaved the port.".format(username))
         self.__running = False
         self.__address = None
         self.__s.close()
 
     def _quit(self):
+        self._leaved("{} leaved the port.".format(username))
         self.__address = None
 
     def _join(self, param):
         if username=='':
-            print("Error while joining, please use '/pseudo' to choose a username.")
+            print('Error while joining, please use "/pseudo" to choose a username.')
         else:
             tokens = param.split(' ')
             if len(tokens) == 2:
                 try:
                     self.__address = (socket.gethostbyaddr(tokens[0])[0], int(tokens[1]))
                     print('Connected to {}:{}'.format(*self.__address))
-                    self._joining(" {} joined the port.".format(username))
+                    self._joined("{} joined the port.".format(username))
                 except OSError:
                     print("Error during command execution.")
+                
+    def _leaved(self, param):
+        if self.__address is not None:
+            try:
+                message = param.encode()
+                totalsent = 0
+                while totalsent < len(message):
+                    sent = self.__s.sendto(message[totalsent:], self.__address)
+                    totalsent += sent
+            except OSError:
+                print('Error during leaving.')
 
-    def _joining(self, param):
+    def _joined(self, param):
         if self.__address is not None:
             try:
                 message = param.encode()
@@ -95,7 +107,7 @@ class Chat():
         if self.__address is not None:
             try:
                 if username=='':
-                    print("Error while sending, please use '/pseudo' to choose a username.")
+                    print('Error while sending, please use "/pseudo" to choose a username.')
                 else:
                     param = username + " : " + param
                     message = param.encode()
@@ -118,7 +130,7 @@ class Chat():
                 if data.decode()[:13]=='Online Users:' or data.decode()=='0 User Online.':
                     print(data.decode())
                 else:
-                    print("{}  sent at {} from IP:{}".format(data.decode(),localtime,address))
+                    print("{}  sent at {}.".format(data.decode(),localtime))
             except socket.timeout:
                 pass
             except OSError:
@@ -128,10 +140,9 @@ class Chat():
        try:
            global username
            username=param
-           User=str(param)+str(s.getsockname())
-           EchoClient(str(User).encode()).run()
+           EchoClient((str(param)+str(s.getsockname())).encode()).run()
        except:
-           print("Error : no active server.")
+           pass
         
     def _help(self):
         print('Please type:')
@@ -143,8 +154,11 @@ class Chat():
         print('"/list"', 'to show online users.')
         
     def _list(self):
-        command = ":list:" + str(s.getsockname())
-        EchoClient(str(command).encode()).run()
+        try:
+            command = ":list:" + str(s.getsockname())
+            EchoClient(str(command).encode()).run()
+        except:
+            print("Server not found, impossible to connect.")
 
 class EchoClient():
     def __init__(self, message):
@@ -152,12 +166,9 @@ class EchoClient():
         self.__s = socket.socket()
 
     def run(self):
-        try:
-            self.__s.connect(SERVERADDRESS)
-            self._send()
-            self.__s.close()
-        except OSError:
-            print("Server not found, impossible to connect.")
+        self.__s.connect(SERVERADDRESS)
+        self._send()
+        self.__s.close()
 
     def _send(self):
         totalsent = 0

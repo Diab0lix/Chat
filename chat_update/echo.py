@@ -2,7 +2,7 @@
 # echo.py
 # author: Sebastien Combefis
 # Modified by: Thierry Frycia & Mohamad Mroue
-# version: March 23, 2017
+# version: March 30, 2017
 
 import socket
 import sys
@@ -23,9 +23,8 @@ class EchoServer():
             try:
                 user = self._receive(client).decode().rstrip()
                 if ":list:" in user:
-                    global ADDRESS
-                    ADDRESS = str(user.rsplit(':')[2])
-                    self._send()
+                    ADDRESS = user.rsplit(':')[2]
+                    self._send(ADDRESS)
                 if user not in Clientlist and ":list:" not in user :
                      Clientlist.append(user)
                 client.close()
@@ -41,7 +40,7 @@ class EchoServer():
             finished = data == b''
         return b''.join(chunks)
 
-    def _send(self):
+    def _send(self, address):
         totalsent = 0
         if len(Clientlist)==0:
             msg = '0 User Online.'
@@ -53,7 +52,7 @@ class EchoServer():
         t=socket.socket(type=socket.SOCK_DGRAM)
         t.bind(SERVERADDRESS)
         
-        n=ADDRESS[1:][:-1]
+        n=address[1:][:-1]
         Ip=n.split(',')[0][1:][:-1]
         Port=int(n.split(',')[1])
         try:
