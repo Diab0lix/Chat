@@ -1,4 +1,4 @@
-# chat.py
+# Let's chat together !
 
 ## Quick start
 
@@ -6,7 +6,7 @@ To run the server, just launch:
 
     > ./python echo.py
 
-You can then launch the chat script by default ('localhost', port=5000):
+You can then launch the chat script by default:
 
     > ./python chat.py
 
@@ -48,5 +48,3 @@ Suitable for peer-to-peer architecture.
 
 - Mohamad Mroue
 - Thierry Frycia
-
-Tested on Windows and Mac OS
