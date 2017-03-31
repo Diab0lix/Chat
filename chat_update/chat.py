@@ -2,7 +2,7 @@
 # chat.py
 # author: Sebastien Combefis
 # Modified by: Thierry Frycia & Mohamad Mroue
-# version: March 30, 2017
+# version: March 31, 2017
 
 import socket
 import sys
@@ -19,11 +19,9 @@ class Chat():
             s.settimeout(0.5)
             s.bind((host, port))
             self.__s = s
-            if host=='localhost' or host=='127.0.0.1':
-                print('Please choose another IP address.')
-                quit()
-            print('Hearing on {}:{}'.format(host, port))
-            print('Use "/help" for help.')
+            print('Listening on {}:{}'.format(host, port))
+            print('''Use "/pseudo" to choose a pseudonym.
+Use "/help" for help.''')
         except OSError:
             print('Please choose another Port or IP address.')
             quit()
@@ -54,19 +52,27 @@ class Chat():
                 try:
                     handlers[command]() if param == '' else handlers[command](param)
                 except:
-                    print("Error during command execution.")
+                    print("Error while command execution.")
             else:
                 print('Unknown Command:', command)
 
     def _exit(self):
-        self._leaved("{} leaved the port.".format(username))
+        self._connection("{} leaved the port.".format(username))
+        try:
+            EchoClient((": delete :"+str(username)+str(s.getsockname())).encode()).run()
+        except:
+            pass
         self.__running = False
         self.__address = None
         self.__s.close()
-
+        
     def _quit(self):
-        self._leaved("{} leaved the port.".format(username))
+        self._connection("{} leaved the port.".format(username))
         self.__address = None
+        try:
+            EchoClient((": delete :"+str(username)+str(s.getsockname())).encode()).run()
+        except:
+            pass
 
     def _join(self, param):
         if username=='':
@@ -77,11 +83,14 @@ class Chat():
                 try:
                     self.__address = (socket.gethostbyaddr(tokens[0])[0], int(tokens[1]))
                     print('Connected to {}:{}'.format(*self.__address))
-                    self._joined("{} joined the port.".format(username))
+                    self._connection("{} joined the port.".format(username))
                 except OSError:
                     print("Error during command execution.")
+            else:
+                print('''Error during command execution.
+Please type Port and Ip address. Example: /join localhost 5001''')
                 
-    def _leaved(self, param):
+    def _connection(self, param):
         if self.__address is not None:
             try:
                 message = param.encode()
@@ -90,18 +99,7 @@ class Chat():
                     sent = self.__s.sendto(message[totalsent:], self.__address)
                     totalsent += sent
             except OSError:
-                print('Error during leaving.')
-
-    def _joined(self, param):
-        if self.__address is not None:
-            try:
-                message = param.encode()
-                totalsent = 0
-                while totalsent < len(message):
-                    sent = self.__s.sendto(message[totalsent:], self.__address)
-                    totalsent += sent
-            except OSError:
-                print('Error during joining.')
+                print('Error during command execution.')
 
     def _send(self, param):
         if self.__address is not None:
@@ -127,38 +125,51 @@ class Chat():
             try:
                 data, address = self.__s.recvfrom(1024)
                 localtime = time.asctime(time.localtime(time.time()))
-                if data.decode()[:13]=='Online Users:' or data.decode()=='0 User Online.':
-                    print(data.decode())
-                else:
+                if data.decode()[1:4]==' : ':
                     print("{}  sent at {}.".format(data.decode(),localtime))
+                else:
+                    print(data.decode())
+                    try:
+                        n = data.decode().split(' ')
+                        if n[1] =='joined':
+                            EchoClient(("{}{}".format(data.decode()[:-17], address)).encode()).run()
+                        if n[1] =='leaved':
+                            EchoClient((": delete :{}{}".format(data.decode()[:-17], address)).encode()).run()
+                    except:
+                        pass
             except socket.timeout:
                 pass
             except OSError:
                 return
 
     def _pseudo(self, param):
-       try:
-           global username
-           username=param
-           EchoClient((str(param)+str(s.getsockname())).encode()).run()
-       except:
-           pass
-        
-    def _help(self):
-        print('Please type:')
-        print('"/exit"', 'to exit the chat application.')
-        print('"/quit"', 'to quit a chatroom.')
-        print('"/join"', 'to join a chat room.')
-        print('"/send"', 'to send a message to members of the same chatroom.')
-        print('"/pseudo"', 'to chose a pseudo to chat.')
-        print('"/list"', 'to show online users.')
-        
+        tokens = param.split(' ')
+        if len(tokens) == 1:
+            try:
+                global username
+                username=param
+                print('Your pseudo has been saved.')
+                EchoClient((str(param)+str(s.getsockname())).encode()).run()
+            except:
+                pass
+        else:
+            print('Invalid pseudo.')
+
     def _list(self):
         try:
-            command = ":list:" + str(s.getsockname())
+            command = ": list :" + str(s.getsockname())
             EchoClient(str(command).encode()).run()
         except:
-            print("Server not found, impossible to connect.")
+            print("Server not found, impossible to connect.")        
+        
+    def _help(self):
+        print('''Please type:
+      "/exit" to exit the chat application.
+      "/quit" to quit a chatroom.
+      "/join" to join a chat room.
+      "/send" to send a message to members of the same chatroom.
+      "/pseudo" to chose a pseudo to chat.
+      "/list" to show online users.''')
 
 class EchoClient():
     def __init__(self, message):
