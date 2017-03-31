@@ -2,7 +2,7 @@
 # echo.py
 # author: Sebastien Combefis
 # Modified by: Thierry Frycia & Mohamad Mroue
-# version: March 30, 2017
+# version: March 31, 2017
 
 import socket
 import sys
@@ -12,21 +12,30 @@ Clientlist=[]
 
 class EchoServer():
     def __init__(self):
-        self.__s = socket.socket()
-        self.__s.bind(SERVERADDRESS)
-        print('You can now launch the chat script.')        
-
+        try:
+            self.__s = socket.socket()
+            self.__s.bind(SERVERADDRESS)
+            print('You can now launch the chat script.')
+        except:
+            print('Please update your network settings.')
+            
     def run(self):
         self.__s.listen(0)
         while True:
             client, addr = self.__s.accept()
             try:
                 user = self._receive(client).decode().rstrip()
-                if ":list:" in user:
+                
+                if ": list :" in user:
                     ADDRESS = user.rsplit(':')[2]
                     self._send(ADDRESS)
-                if user not in Clientlist and ":list:" not in user :
-                     Clientlist.append(user)
+                if user not in Clientlist and ": list :" not in user and ": delete :" not in user and "Online Users:" not in user:
+                    Clientlist.append(user)
+                if ": delete :" in user:
+                    try:
+                        Clientlist.remove(user[10:])
+                    except:
+                        pass
                 client.close()
             except OSError:
                 print('Error while receiving message.')
@@ -55,6 +64,8 @@ class EchoServer():
         n=address[1:][:-1]
         Ip=n.split(',')[0][1:][:-1]
         Port=int(n.split(',')[1])
+        if Ip!=socket.gethostbyname(socket.gethostname()):
+            Ip=socket.gethostbyname(socket.gethostname())
         try:
             while totalsent < len(msg):
                 sent = t.sendto(msg[totalsent:].encode(), (Ip, Port))
